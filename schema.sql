@@ -229,7 +229,8 @@ ALTER SEQUENCE public.account_account_id_seq OWNED BY public.account.account_id;
 CREATE TABLE public.heartbeat (
     heartbeat_id uuid NOT NULL,
     last_seen timestamp without time zone NOT NULL,
-    account_id bigint NOT NULL
+    account_id bigint NOT NULL,
+    name text
 );
 
 
@@ -400,6 +401,13 @@ GRANT SELECT ON TABLE public.account TO "beatmon/person";
 --
 
 GRANT SELECT ON TABLE public.heartbeat TO "beatmon/person";
+
+
+--
+-- Name: COLUMN heartbeat.name; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT UPDATE(name) ON TABLE public.heartbeat TO "beatmon/person";
 
 
 --
