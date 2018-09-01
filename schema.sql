@@ -155,7 +155,7 @@ begin
   	from internal.account_password a
 	where a.account_id = account.account_id;
 
-  if account_password.password_hash = crypt(password, account_password.password_hash) then
+  if account.is_active and account_password.password_hash = crypt(password, account_password.password_hash) then
     return (
       'beatmon/person',
       extract(epoch from now() + interval '7 days'),
