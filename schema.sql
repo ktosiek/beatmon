@@ -217,6 +217,39 @@ $$;
 ALTER FUNCTION public.heartbeat_last_seen(h public.heartbeat) OWNER TO tomek;
 
 --
+-- Name: refresh_token(); Type: FUNCTION; Schema: public; Owner: beatmon/admin
+--
+
+CREATE FUNCTION public.refresh_token() RETURNS public.jwt_token
+    LANGUAGE plpgsql STRICT SECURITY DEFINER
+    AS $$
+
+declare
+  account public.account;
+begin
+  select a.* into account
+    from public.account as a
+    where a.account_id = current_account_id();
+
+  if account.is_active then
+    return (
+      'beatmon/person',
+      extract(epoch from now() + interval '7 days'),
+      account.account_id,
+      account.is_admin,
+	  account.email
+    )::public.jwt_token;
+  else
+    return null;
+  end if;
+end;
+
+$$;
+
+
+ALTER FUNCTION public.refresh_token() OWNER TO "beatmon/admin";
+
+--
 -- Name: account_password; Type: TABLE; Schema: internal; Owner: beatmon/admin
 --
 
@@ -235,7 +268,8 @@ ALTER TABLE internal.account_password OWNER TO "beatmon/admin";
 CREATE TABLE public.account (
     account_id bigint NOT NULL,
     email character varying(250) NOT NULL,
-    is_admin boolean DEFAULT false NOT NULL
+    is_admin boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
 );
 
 
