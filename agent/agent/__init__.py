@@ -29,6 +29,12 @@ class Agent():
             self.beat(*argv[2:])
         elif argv[1] == 'ls':
             self.ls(*argv[2:])
+        elif argv[1] == 'beat-set-name':
+            self.beat_set_name(*argv[2:])
+        elif argv[1] == 'beat-set-timeout':
+            self.beat_set_timeout(*argv[2:])
+        elif argv[1] == 'beat-create':
+            self.beat_create(*argv[2:])
         else:
             self.usage(argv[0])
 
@@ -49,8 +55,23 @@ class Agent():
         for hb in heartbeats:
             print("{} {} {}".format(hb['heartbeatId'], hb['lastSeen'] or 'never' + ' ' * 21, hb['name'] or ''))
 
+    def beat_set_name(self, uuid, name):
+        self._load_token()
+        beat = self._get_heartbeat(uuid)
+        self._update_heartbeat(dict(beat, name=name))
+
+    def beat_set_timeout(self, uuid, timeout):
+        self._load_token()
+        beat = self._get_heartbeat(uuid)
+        self._update_heartbeat(dict(beat, notifyAfterSeconds=int(timeout)))
+
+    def beat_create(self, name=None):
+        self._load_token()
+        beat = self._create_heartbeat(name)
+        print("Created new heartbeat {}".format(beat['heartbeatId']))
+
     def usage(self, progname):
-        print("Usage: {} [login username|beat heartbeat_id|ls]".format(progname))
+        print("Usage: {} [login username|beat heartbeat_id|ls|beat-set-name id name|beat-set-timeout id seconds|beat-create [name]]".format(progname))
 
     @property
     def token(self):
@@ -92,6 +113,22 @@ class Agent():
     def _get_heartbeats(self):
         response = self.client.execute(ALL_HEARTBEATS)
         return response['allHeartbeats']['nodes']
+
+    def _get_heartbeat(self, uuid):
+        response = self.client.execute(HEARTBEATS_BY_ID, variable_values={
+            'uuid': uuid,
+        })
+        nodes = response['allHeartbeats']['nodes']
+        return nodes[0] if nodes else None
+
+    def _update_heartbeat(self, beat):
+        self.client.execute(UPDATE_HEARTBEAT, variable_values=beat)
+
+    def _create_heartbeat(self, name):
+        response = self.client.execute(CREATE_HEARTBEAT, variable_values={
+            'name': name or None,
+        })
+        return response['createHeartbeat']['heartbeat']
 
     def _refresh_token(self):
         response = self.client.execute(REFRESH_TOKEN)
@@ -146,9 +183,57 @@ ALL_HEARTBEATS = gql('''
 {
   allHeartbeats {
     nodes {
+      nodeId
       heartbeatId
       lastSeen
       name
+    }
+  }
+}
+''')
+
+HEARTBEATS_BY_ID = gql('''
+query heartbeat($uuid:UUID!) {
+  allHeartbeats(condition:{heartbeatId:$uuid}) {
+    nodes {
+      nodeId
+      heartbeatId
+      name
+      notifyAfterSeconds
+    }
+  }
+}
+''')
+
+CREATE_HEARTBEAT = gql('''
+mutation createHeartbeat($name:String){
+  createHeartbeat(input:{
+    heartbeat:{
+      name:$name,
+    }
+  }) {
+    heartbeat{
+      heartbeatId
+      name
+      notifyAfterSeconds
+    }
+  }
+}
+''')
+
+UPDATE_HEARTBEAT = gql('''
+mutation updateHeartbeat($nodeId:ID!, $name:String, $notifyAfterSeconds:Int){
+  updateHeartbeat(input:{
+    nodeId:$nodeId,
+    heartbeatPatch:{
+      name:$name,
+      notifyAfterSeconds:$notifyAfterSeconds,
+    }
+  }) {
+    heartbeat{
+      heartbeatId
+      name
+      notifyAfterSeconds
     }
   }
 }

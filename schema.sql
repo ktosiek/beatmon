@@ -197,7 +197,9 @@ SET default_with_oids = false;
 CREATE TABLE public.heartbeat (
     heartbeat_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     account_id bigint DEFAULT public.current_account_id() NOT NULL,
-    name text
+    name text,
+    notify_after_seconds integer DEFAULT (5 * 60) NOT NULL,
+    CONSTRAINT notify_after_seconds_min CHECK ((notify_after_seconds > 60))
 );
 
 
@@ -466,6 +468,13 @@ GRANT SELECT ON TABLE public.heartbeat TO "beatmon/person";
 --
 
 GRANT INSERT(name),UPDATE(name) ON TABLE public.heartbeat TO "beatmon/person";
+
+
+--
+-- Name: COLUMN heartbeat.notify_after_seconds; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT INSERT(notify_after_seconds),UPDATE(notify_after_seconds) ON TABLE public.heartbeat TO "beatmon/person";
 
 
 --
