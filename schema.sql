@@ -62,6 +62,20 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
 -- Name: jwt_token; Type: TYPE; Schema: public; Owner: beatmon/admin
 --
 
@@ -177,6 +191,32 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: heartbeat; Type: TABLE; Schema: public; Owner: beatmon/admin
+--
+
+CREATE TABLE public.heartbeat (
+    heartbeat_id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    account_id bigint DEFAULT public.current_account_id() NOT NULL,
+    name text
+);
+
+
+ALTER TABLE public.heartbeat OWNER TO "beatmon/admin";
+
+--
+-- Name: heartbeat_last_seen(public.heartbeat); Type: FUNCTION; Schema: public; Owner: tomek
+--
+
+CREATE FUNCTION public.heartbeat_last_seen(h public.heartbeat) RETURNS timestamp without time zone
+    LANGUAGE sql STABLE
+    AS $$
+  select max(date) from heartbeat_log l where l.heartbeat_id = h.heartbeat_id 
+$$;
+
+
+ALTER FUNCTION public.heartbeat_last_seen(h public.heartbeat) OWNER TO tomek;
+
+--
 -- Name: account_password; Type: TABLE; Schema: internal; Owner: beatmon/admin
 --
 
@@ -223,27 +263,13 @@ ALTER SEQUENCE public.account_account_id_seq OWNED BY public.account.account_id;
 
 
 --
--- Name: heartbeat; Type: TABLE; Schema: public; Owner: beatmon/admin
---
-
-CREATE TABLE public.heartbeat (
-    heartbeat_id uuid NOT NULL,
-    last_seen timestamp without time zone NOT NULL,
-    account_id bigint NOT NULL,
-    name text
-);
-
-
-ALTER TABLE public.heartbeat OWNER TO "beatmon/admin";
-
---
 -- Name: heartbeat_log; Type: TABLE; Schema: public; Owner: beatmon/admin
 --
 
 CREATE TABLE public.heartbeat_log (
-    date timestamp without time zone NOT NULL,
+    date timestamp without time zone DEFAULT now() NOT NULL,
     heartbeat_id uuid NOT NULL,
-    account_id bigint NOT NULL
+    account_id bigint DEFAULT public.current_account_id() NOT NULL
 );
 
 
@@ -281,6 +307,14 @@ ALTER TABLE ONLY public.account
 
 
 --
+-- Name: heartbeat heartbeat_account_uniq; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE ONLY public.heartbeat
+    ADD CONSTRAINT heartbeat_account_uniq UNIQUE (heartbeat_id, account_id);
+
+
+--
 -- Name: heartbeat_log heartbeat_log_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
@@ -297,10 +331,10 @@ ALTER TABLE ONLY public.heartbeat
 
 
 --
--- Name: fki_heartbeat_fk_heartbeat_log; Type: INDEX; Schema: public; Owner: beatmon/admin
+-- Name: fki_heartbeat_log_fk_heartbeat; Type: INDEX; Schema: public; Owner: beatmon/admin
 --
 
-CREATE INDEX fki_heartbeat_fk_heartbeat_log ON public.heartbeat USING btree (heartbeat_id, last_seen);
+CREATE INDEX fki_heartbeat_log_fk_heartbeat ON public.heartbeat_log USING btree (heartbeat_id, account_id);
 
 
 --
@@ -319,27 +353,11 @@ ALTER TABLE ONLY public.heartbeat
 
 
 --
--- Name: heartbeat heartbeat_fk_heartbeat_log; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
---
-
-ALTER TABLE ONLY public.heartbeat
-    ADD CONSTRAINT heartbeat_fk_heartbeat_log FOREIGN KEY (heartbeat_id, last_seen) REFERENCES public.heartbeat_log(heartbeat_id, date) DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- Name: heartbeat_log heartbeat_log_fk_account_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
+-- Name: heartbeat_log heartbeat_log_fk_heartbeat; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat_log
-    ADD CONSTRAINT heartbeat_log_fk_account_id FOREIGN KEY (account_id) REFERENCES public.account(account_id);
-
-
---
--- Name: heartbeat_log heartbeat_log_fk_heartbeat_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
---
-
-ALTER TABLE ONLY public.heartbeat_log
-    ADD CONSTRAINT heartbeat_log_fk_heartbeat_id FOREIGN KEY (heartbeat_id) REFERENCES public.heartbeat(heartbeat_id);
+    ADD CONSTRAINT heartbeat_log_fk_heartbeat FOREIGN KEY (heartbeat_id, account_id) REFERENCES public.heartbeat(heartbeat_id, account_id);
 
 
 --
@@ -383,6 +401,12 @@ CREATE POLICY account_self ON public.account TO beatmon USING ((account_id = pub
 ALTER TABLE public.heartbeat ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: heartbeat_log; Type: ROW SECURITY; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE public.heartbeat_log ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: heartbeat heartbeat_owner; Type: POLICY; Schema: public; Owner: beatmon/admin
 --
 
@@ -390,10 +414,10 @@ CREATE POLICY heartbeat_owner ON public.heartbeat TO beatmon USING ((account_id 
 
 
 --
--- Name: TABLE account; Type: ACL; Schema: public; Owner: beatmon/admin
+-- Name: heartbeat_log heartbeat_owner; Type: POLICY; Schema: public; Owner: beatmon/admin
 --
 
-GRANT SELECT ON TABLE public.account TO "beatmon/person";
+CREATE POLICY heartbeat_owner ON public.heartbeat_log TO beatmon USING ((account_id = public.current_account_id()));
 
 
 --
@@ -407,7 +431,28 @@ GRANT SELECT ON TABLE public.heartbeat TO "beatmon/person";
 -- Name: COLUMN heartbeat.name; Type: ACL; Schema: public; Owner: beatmon/admin
 --
 
-GRANT UPDATE(name) ON TABLE public.heartbeat TO "beatmon/person";
+GRANT INSERT(name),UPDATE(name) ON TABLE public.heartbeat TO "beatmon/person";
+
+
+--
+-- Name: TABLE account; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE public.account TO "beatmon/person";
+
+
+--
+-- Name: TABLE heartbeat_log; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE public.heartbeat_log TO "beatmon/person";
+
+
+--
+-- Name: COLUMN heartbeat_log.heartbeat_id; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT INSERT(heartbeat_id) ON TABLE public.heartbeat_log TO "beatmon/person";
 
 
 --
