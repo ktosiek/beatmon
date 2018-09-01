@@ -16,13 +16,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: internal; Type: SCHEMA; Schema: -; Owner: tomek
+-- Name: internal; Type: SCHEMA; Schema: -; Owner: beatmon/admin
 --
 
 CREATE SCHEMA internal;
 
 
-ALTER SCHEMA internal OWNER TO tomek;
+ALTER SCHEMA internal OWNER TO "beatmon/admin";
 
 --
 -- Name: postgraphile_watch; Type: SCHEMA; Schema: -; Owner: tomek
@@ -62,7 +62,7 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
--- Name: jwt_token; Type: TYPE; Schema: internal; Owner: beatmon
+-- Name: jwt_token; Type: TYPE; Schema: internal; Owner: beatmon/admin
 --
 
 CREATE TYPE internal.jwt_token AS (
@@ -74,7 +74,7 @@ CREATE TYPE internal.jwt_token AS (
 );
 
 
-ALTER TYPE internal.jwt_token OWNER TO beatmon;
+ALTER TYPE internal.jwt_token OWNER TO "beatmon/admin";
 
 --
 -- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: tomek
@@ -123,7 +123,7 @@ $$;
 ALTER FUNCTION postgraphile_watch.notify_watchers_drop() OWNER TO tomek;
 
 --
--- Name: authenticate(text, text); Type: FUNCTION; Schema: public; Owner: tomek
+-- Name: authenticate(text, text); Type: FUNCTION; Schema: public; Owner: beatmon/admin
 --
 
 CREATE FUNCTION public.authenticate(email text, password text) RETURNS internal.jwt_token
@@ -157,14 +157,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.authenticate(email text, password text) OWNER TO tomek;
+ALTER FUNCTION public.authenticate(email text, password text) OWNER TO "beatmon/admin";
 
 SET default_tablespace = '';
 
 SET default_with_oids = false;
 
 --
--- Name: account_password; Type: TABLE; Schema: internal; Owner: beatmon
+-- Name: account_password; Type: TABLE; Schema: internal; Owner: beatmon/admin
 --
 
 CREATE TABLE internal.account_password (
@@ -173,10 +173,10 @@ CREATE TABLE internal.account_password (
 );
 
 
-ALTER TABLE internal.account_password OWNER TO beatmon;
+ALTER TABLE internal.account_password OWNER TO "beatmon/admin";
 
 --
--- Name: account; Type: TABLE; Schema: public; Owner: beatmon
+-- Name: account; Type: TABLE; Schema: public; Owner: beatmon/admin
 --
 
 CREATE TABLE public.account (
@@ -186,10 +186,10 @@ CREATE TABLE public.account (
 );
 
 
-ALTER TABLE public.account OWNER TO beatmon;
+ALTER TABLE public.account OWNER TO "beatmon/admin";
 
 --
--- Name: account_account_id_seq; Type: SEQUENCE; Schema: public; Owner: beatmon
+-- Name: account_account_id_seq; Type: SEQUENCE; Schema: public; Owner: beatmon/admin
 --
 
 CREATE SEQUENCE public.account_account_id_seq
@@ -200,17 +200,17 @@ CREATE SEQUENCE public.account_account_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.account_account_id_seq OWNER TO beatmon;
+ALTER TABLE public.account_account_id_seq OWNER TO "beatmon/admin";
 
 --
--- Name: account_account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: beatmon
+-- Name: account_account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: beatmon/admin
 --
 
 ALTER SEQUENCE public.account_account_id_seq OWNED BY public.account.account_id;
 
 
 --
--- Name: heartbeat; Type: TABLE; Schema: public; Owner: beatmon
+-- Name: heartbeat; Type: TABLE; Schema: public; Owner: beatmon/admin
 --
 
 CREATE TABLE public.heartbeat (
@@ -220,10 +220,10 @@ CREATE TABLE public.heartbeat (
 );
 
 
-ALTER TABLE public.heartbeat OWNER TO beatmon;
+ALTER TABLE public.heartbeat OWNER TO "beatmon/admin";
 
 --
--- Name: heartbeat_log; Type: TABLE; Schema: public; Owner: beatmon
+-- Name: heartbeat_log; Type: TABLE; Schema: public; Owner: beatmon/admin
 --
 
 CREATE TABLE public.heartbeat_log (
@@ -233,17 +233,17 @@ CREATE TABLE public.heartbeat_log (
 );
 
 
-ALTER TABLE public.heartbeat_log OWNER TO beatmon;
+ALTER TABLE public.heartbeat_log OWNER TO "beatmon/admin";
 
 --
--- Name: account account_id; Type: DEFAULT; Schema: public; Owner: beatmon
+-- Name: account account_id; Type: DEFAULT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.account ALTER COLUMN account_id SET DEFAULT nextval('public.account_account_id_seq'::regclass);
 
 
 --
--- Name: account_password account_password_pkey; Type: CONSTRAINT; Schema: internal; Owner: beatmon
+-- Name: account_password account_password_pkey; Type: CONSTRAINT; Schema: internal; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY internal.account_password
@@ -251,7 +251,7 @@ ALTER TABLE ONLY internal.account_password
 
 
 --
--- Name: account account_email_uniq; Type: CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: account account_email_uniq; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.account
@@ -259,7 +259,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.account
@@ -267,7 +267,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: heartbeat_log heartbeat_log_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat_log heartbeat_log_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat_log
@@ -275,7 +275,7 @@ ALTER TABLE ONLY public.heartbeat_log
 
 
 --
--- Name: heartbeat heartbeat_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat heartbeat_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat
@@ -283,21 +283,21 @@ ALTER TABLE ONLY public.heartbeat
 
 
 --
--- Name: fki_heartbeat_fk_heartbeat_log; Type: INDEX; Schema: public; Owner: beatmon
+-- Name: fki_heartbeat_fk_heartbeat_log; Type: INDEX; Schema: public; Owner: beatmon/admin
 --
 
 CREATE INDEX fki_heartbeat_fk_heartbeat_log ON public.heartbeat USING btree (heartbeat_id, last_seen);
 
 
 --
--- Name: fki_heartbeat_log_fk_heartbeat_id; Type: INDEX; Schema: public; Owner: beatmon
+-- Name: fki_heartbeat_log_fk_heartbeat_id; Type: INDEX; Schema: public; Owner: beatmon/admin
 --
 
 CREATE INDEX fki_heartbeat_log_fk_heartbeat_id ON public.heartbeat_log USING btree (heartbeat_id);
 
 
 --
--- Name: heartbeat heartbeat_fk_account_Id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat heartbeat_fk_account_Id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat
@@ -305,7 +305,7 @@ ALTER TABLE ONLY public.heartbeat
 
 
 --
--- Name: heartbeat heartbeat_fk_heartbeat_log; Type: FK CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat heartbeat_fk_heartbeat_log; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat
@@ -313,7 +313,7 @@ ALTER TABLE ONLY public.heartbeat
 
 
 --
--- Name: heartbeat_log heartbeat_log_fk_account_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat_log heartbeat_log_fk_account_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat_log
@@ -321,7 +321,7 @@ ALTER TABLE ONLY public.heartbeat_log
 
 
 --
--- Name: heartbeat_log heartbeat_log_fk_heartbeat_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon
+-- Name: heartbeat_log heartbeat_log_fk_heartbeat_id; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
 --
 
 ALTER TABLE ONLY public.heartbeat_log
