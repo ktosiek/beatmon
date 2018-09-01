@@ -159,6 +159,19 @@ $$;
 
 ALTER FUNCTION public.authenticate(email text, password text) OWNER TO "beatmon/admin";
 
+--
+-- Name: current_account_id(); Type: FUNCTION; Schema: public; Owner: beatmon
+--
+
+CREATE FUNCTION public.current_account_id() RETURNS bigint
+    LANGUAGE sql STABLE
+    AS $$
+  select nullif(current_setting('jwt.claims.account_id', true), '')::bigint;
+$$;
+
+
+ALTER FUNCTION public.current_account_id() OWNER TO beatmon;
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -348,6 +361,46 @@ CREATE EVENT TRIGGER postgraphile_watch_drop ON sql_drop
 
 
 ALTER EVENT TRIGGER postgraphile_watch_drop OWNER TO tomek;
+
+--
+-- Name: account; Type: ROW SECURITY; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE public.account ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: account account_self; Type: POLICY; Schema: public; Owner: beatmon/admin
+--
+
+CREATE POLICY account_self ON public.account TO beatmon USING ((account_id = public.current_account_id()));
+
+
+--
+-- Name: heartbeat; Type: ROW SECURITY; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE public.heartbeat ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: heartbeat heartbeat_owner; Type: POLICY; Schema: public; Owner: beatmon/admin
+--
+
+CREATE POLICY heartbeat_owner ON public.heartbeat TO beatmon USING ((account_id = public.current_account_id()));
+
+
+--
+-- Name: TABLE account; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE public.account TO "beatmon/person";
+
+
+--
+-- Name: TABLE heartbeat; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE public.heartbeat TO "beatmon/person";
+
 
 --
 -- PostgreSQL database dump complete
