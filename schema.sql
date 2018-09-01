@@ -62,10 +62,10 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
--- Name: jwt_token; Type: TYPE; Schema: internal; Owner: beatmon/admin
+-- Name: jwt_token; Type: TYPE; Schema: public; Owner: beatmon/admin
 --
 
-CREATE TYPE internal.jwt_token AS (
+CREATE TYPE public.jwt_token AS (
 	role text,
 	exp integer,
 	account_id integer,
@@ -74,7 +74,7 @@ CREATE TYPE internal.jwt_token AS (
 );
 
 
-ALTER TYPE internal.jwt_token OWNER TO "beatmon/admin";
+ALTER TYPE public.jwt_token OWNER TO "beatmon/admin";
 
 --
 -- Name: notify_watchers_ddl(); Type: FUNCTION; Schema: postgraphile_watch; Owner: tomek
@@ -126,7 +126,7 @@ ALTER FUNCTION postgraphile_watch.notify_watchers_drop() OWNER TO tomek;
 -- Name: authenticate(text, text); Type: FUNCTION; Schema: public; Owner: beatmon/admin
 --
 
-CREATE FUNCTION public.authenticate(email text, password text) RETURNS internal.jwt_token
+CREATE FUNCTION public.authenticate(email text, password text) RETURNS public.jwt_token
     LANGUAGE plpgsql STRICT SECURITY DEFINER
     AS $$
 
@@ -148,7 +148,7 @@ begin
       account.account_id,
       account.is_admin,
 	  account.email
-    )::internal.jwt_token;
+    )::public.jwt_token;
   else
     return null;
   end if;
