@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from datetime import datetime, timedelta
 import getpass
 from os.path import expanduser
@@ -155,6 +154,7 @@ ALL_HEARTBEATS = gql('''
 }
 ''')
 
-if __name__ == '__main__':
+
+def main():
     import sys
     Agent().main(sys.argv)

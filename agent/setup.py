@@ -1,0 +1,20 @@
+from setuptools import setup
+setup(
+    name='beatmon-agent',
+    scripts=['bin/agent'],
+    packages=['agent'],
+    install_requires=[
+        "certifi==2018.8.24",
+        "chardet==3.0.4",
+        "gql==0.1.0",
+        "graphql-core==2.1",
+        "idna==2.7",
+        "promise==2.1",
+        "pyjwt==1.6.4",
+        "requests==2.19.1",
+        "rx==1.6.1",
+        "six==1.11.0",
+        "typing==3.6.6",
+        "urllib3==1.23",
+    ]
+)
