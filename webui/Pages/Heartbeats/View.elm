@@ -75,7 +75,7 @@ humaneDuration allSeconds =
         ( minutes, seconds ) =
             divMod allSeconds 60
     in
-    String.fromInt minutes ++ ":" ++ String.fromInt seconds
+    String.fromInt minutes ++ ":" ++ (String.fromInt seconds |> String.padLeft 2 '0')
 
 
 humaneTimestamp : Time.Zone -> Time.Posix -> String
@@ -90,4 +90,4 @@ humaneTimestamp tz t =
 
 divMod : Int -> Int -> ( Int, Int )
 divMod a b =
-    ( a // b, modBy a b )
+    ( a // b, modBy b a )
