@@ -22,10 +22,13 @@ import Graphql.Http
 import Graphql.Operation exposing (RootMutation, RootQuery)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument)
 import Graphql.SelectionSet exposing (SelectionSet, with)
+import ISO8601
 import Maybe.Extra as Maybe
 import RemoteData exposing (RemoteData(..))
 import Task exposing (Task)
+import Time
 import Utils.Maybe as Maybe
+import Utils.Result as Result
 
 
 type alias Context =
@@ -44,6 +47,7 @@ type alias Heartbeat =
     { id : String
     , name : Maybe String
     , notifyAfter : Int
+    , lastSeen : Maybe Time.Posix
     }
 
 
@@ -171,11 +175,18 @@ heartbeatSelector =
         |> with (Field.map unUUID Heartbeat.heartbeatId)
         |> with Heartbeat.name
         |> with Heartbeat.notifyAfterSeconds
+        |> with (Field.mapOrFail (Maybe.map fromDatetime >> Result.pushMaybe) Heartbeat.lastSeen)
 
 
 unUUID : Api.Uuid -> String
 unUUID (Api.Uuid s) =
     s
+
+
+fromDatetime : Api.Datetime -> Result String Time.Posix
+fromDatetime (Api.Datetime str) =
+    ISO8601.fromString str
+        |> Result.map ISO8601.toPosix
 
 
 argOrAbsent : Maybe a -> OptionalArgument a

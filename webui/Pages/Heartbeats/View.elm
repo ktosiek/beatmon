@@ -7,7 +7,9 @@ import Html exposing (Html)
 import Model
 import Pages.Heartbeats.Model exposing (..)
 import RemoteData exposing (RemoteData(..))
+import Time
 import Utils.List as List
+import Utils.Time as Time
 
 
 init : Context a -> ( Model, Cmd Model.Msg )
@@ -58,11 +60,12 @@ heartbeatsTable heartbeatPage =
 
 
 heartbeatRow : Heartbeat -> Html Msg
-heartbeatRow { id, name, notifyAfter } =
+heartbeatRow { id, name, notifyAfter, lastSeen } =
     Html.tr []
         [ Html.td [] [ id |> Html.text ]
         , Html.td [] [ name |> Maybe.withDefault "" |> Html.text ]
         , Html.td [] [ humaneDuration notifyAfter |> Html.text ]
+        , Html.td [] [ lastSeen |> Maybe.map humaneTimestamp |> Maybe.withDefault "Never" |> Html.text ]
         ]
 
 
@@ -73,6 +76,16 @@ humaneDuration allSeconds =
             divMod allSeconds 60
     in
     String.fromInt minutes ++ ":" ++ String.fromInt seconds
+
+
+humaneTimestamp : Time.Posix -> String
+humaneTimestamp t =
+    let
+        s f =
+            f Time.utc t |> String.fromInt |> String.padLeft 2 '0'
+    in
+    String.join ""
+        [ s Time.toYear, "-", s Time.toMonthNumber, "-", s Time.toDay, " ", s Time.toHour, ":", s Time.toMinute, ":", s Time.toSecond ]
 
 
 divMod : Int -> Int -> ( Int, Int )
