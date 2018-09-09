@@ -1,0 +1,18 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+</head>
+<body>
+  <script src="/webui/dist/elm.js"></script>
+  <script>
+    var app = Elm.Main.init({
+      flags: {
+        apiToken: localStorage.getItem("apiToken"),
+      },
+    });
+    app.ports.saveApiToken.subscribe(function(token) {
+      localStorage.setItem('apiToken', token);
+    });
+  </script>
+</body>
+</html>

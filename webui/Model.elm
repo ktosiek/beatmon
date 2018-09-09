@@ -13,8 +13,11 @@ type alias Model =
 type Msg
     = LoginMsg Login.Msg
     | LoggedIn Beatmon.Context
+    | ShowLogin
+    | NoOp
 
 
 type View
     = LoginView Login.Model
     | SuccessView
+    | LoadingView

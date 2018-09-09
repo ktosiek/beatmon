@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Beatmon.Api.Query exposing (AccountByAccountIdRequiredArguments, AccountByEmailRequiredArguments, AccountRequiredArguments, AllAccountsOptionalArguments, AllHeartbeatLogsOptionalArguments, AllHeartbeatsOptionalArguments, HeartbeatByHeartbeatIdAndAccountIdRequiredArguments, HeartbeatByHeartbeatIdRequiredArguments, HeartbeatLogByDateAndHeartbeatIdRequiredArguments, HeartbeatLogRequiredArguments, HeartbeatRequiredArguments, NodeRequiredArguments, account, accountByAccountId, accountByEmail, allAccounts, allHeartbeatLogs, allHeartbeats, currentAccountId, heartbeat, heartbeatByHeartbeatId, heartbeatByHeartbeatIdAndAccountId, heartbeatLog, heartbeatLogByDateAndHeartbeatId, node, nodeId, query, selection)
+module Beatmon.Api.Query exposing (AccountByAccountIdRequiredArguments, AccountByEmailRequiredArguments, AccountRequiredArguments, AllAccountsOptionalArguments, AllHeartbeatLogsOptionalArguments, AllHeartbeatsOptionalArguments, HeartbeatByHeartbeatIdAndAccountIdRequiredArguments, HeartbeatByHeartbeatIdRequiredArguments, HeartbeatLogByDateAndHeartbeatIdRequiredArguments, HeartbeatLogRequiredArguments, HeartbeatRequiredArguments, NodeRequiredArguments, account, accountByAccountId, accountByEmail, allAccounts, allHeartbeatLogs, allHeartbeats, currentAccount, currentAccountId, heartbeat, heartbeatByHeartbeatId, heartbeatByHeartbeatIdAndAccountId, heartbeatLog, heartbeatLogByDateAndHeartbeatId, node, nodeId, query, selection)
 
 import Beatmon.Api.Enum.AccountsOrderBy
 import Beatmon.Api.Enum.HeartbeatLogsOrderBy
@@ -185,6 +185,11 @@ type alias HeartbeatLogByDateAndHeartbeatIdRequiredArguments =
 heartbeatLogByDateAndHeartbeatId : HeartbeatLogByDateAndHeartbeatIdRequiredArguments -> SelectionSet decodesTo Beatmon.Api.Object.HeartbeatLog -> Field (Maybe decodesTo) RootQuery
 heartbeatLogByDateAndHeartbeatId requiredArgs object_ =
     Object.selectionField "heartbeatLogByDateAndHeartbeatId" [ Argument.required "date" requiredArgs.date (\(Beatmon.Api.Scalar.Datetime raw) -> Encode.string raw), Argument.required "heartbeatId" requiredArgs.heartbeatId (\(Beatmon.Api.Scalar.Uuid raw) -> Encode.string raw) ] object_ (identity >> Decode.nullable)
+
+
+currentAccount : SelectionSet decodesTo Beatmon.Api.Object.Account -> Field (Maybe decodesTo) RootQuery
+currentAccount object_ =
+    Object.selectionField "currentAccount" [] object_ (identity >> Decode.nullable)
 
 
 currentAccountId : Field (Maybe Beatmon.Api.Scalar.BigInt) RootQuery

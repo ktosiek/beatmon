@@ -1,6 +1,8 @@
-module Beatmon exposing (Context, apiContext, login)
+module Beatmon exposing (Context, apiContext, login, loginWithToken)
 
 import Beatmon.Api.Mutation as Mutation
+import Beatmon.Api.Object as Api
+import Beatmon.Api.Object.Account as Account
 import Beatmon.Api.Object.AuthenticatePayload
 import Beatmon.Api.Query as Query
 import Beatmon.Api.Scalar as Api
@@ -12,15 +14,18 @@ import Graphql.SelectionSet exposing (SelectionSet, with)
 import Maybe.Extra as Maybe
 import RemoteData exposing (RemoteData(..))
 import Task exposing (Task)
+import Utils.Maybe as Maybe
 
 
-type Context
-    = Context RawContext
-
-
-type alias RawContext =
+type alias Context =
     { url : String
     , token : Maybe String
+    }
+
+
+type alias Account =
+    { id : Int
+    , email : String
     }
 
 
@@ -32,37 +37,60 @@ login : Context -> { username : String, password : String } -> Task LoginError C
 login ctx credentials =
     loginQuery credentials.username credentials.password
         |> sendMutation ctx
-        |> Task.mapError (\_ -> "There was a problem when communicating with the server")
-        |> Task.andThen
-            (Maybe.map (setToken ctx >> Task.succeed)
-                >> Maybe.withDefault (Task.fail "Wrong username or password")
-            )
+        |> handleErrors "Wrong username or password"
+        |> Task.map (setToken ctx)
+
+
+loginWithToken : Context -> String -> Task String Context
+loginWithToken baseCtx rawToken =
+    let
+        ctx =
+            setToken baseCtx (Api.JwtToken rawToken)
+    in
+    currentAccountQuery
+        |> sendQuery ctx
+        |> Task.map (Debug.log "Ok")
+        |> Task.mapError (Debug.log "Err")
+        |> handleErrors "Not logged in"
+        |> Task.map (\_ -> ctx)
 
 
 apiContext : String -> Context
 apiContext url =
-    Context { url = url, token = Nothing }
+    { url = url, token = Nothing }
 
 
 setToken : Context -> Api.JwtToken -> Context
-setToken (Context ctx) (Api.JwtToken t) =
-    Context { ctx | token = Just t }
+setToken ctx (Api.JwtToken t) =
+    { ctx | token = Just t }
 
 
 sendMutation :
     Context
     -> SelectionSet a RootMutation
     -> Task (Graphql.Http.Error a) a
-sendMutation (Context ctx) mutation =
-    Graphql.Http.mutationRequest ctx.url mutation
-        |> applyMaybe ctx.token
+sendMutation { url, token } mutation =
+    Graphql.Http.mutationRequest url mutation
+        |> Maybe.apply token
             (\t -> Graphql.Http.withHeader "Authorization" ("Bearer " ++ t))
         |> Graphql.Http.toTask
 
 
-applyMaybe : Maybe a -> (a -> b -> b) -> b -> b
-applyMaybe m f =
-    Maybe.map f m |> Maybe.withDefault identity
+sendQuery : Context -> SelectionSet a RootQuery -> Task (Graphql.Http.Error a) a
+sendQuery { url, token } query =
+    Graphql.Http.queryRequest url query
+        |> Maybe.apply token
+            (\t -> Graphql.Http.withHeader "Authorization" ("Bearer " ++ t))
+        |> Graphql.Http.toTask
+
+
+handleErrors : String -> Task (Graphql.Http.Error (Maybe a)) (Maybe a) -> Task String a
+handleErrors onNothing =
+    Task.mapError (Debug.log "API Error")
+        >> Task.mapError
+            (\_ -> "There was a problem when communicating with the server")
+        >> Task.andThen
+            (Maybe.map Task.succeed >> Maybe.withDefault (Task.fail onNothing))
 
 
 loginQuery : String -> String -> SelectionSet (Maybe Api.JwtToken) RootMutation
@@ -80,3 +108,20 @@ loginQuery username password =
                     |> with Beatmon.Api.Object.AuthenticatePayload.jwtToken
                 )
             )
+
+
+currentAccountQuery : SelectionSet (Maybe Account) RootQuery
+currentAccountQuery =
+    Query.selection identity
+        |> with
+            (Query.currentAccount
+                (Account.selection Account
+                    |> with (Account.accountId |> Field.map fromApiBigInt |> Field.nonNullOrFail)
+                    |> with Account.email
+                )
+            )
+
+
+fromApiBigInt : Api.BigInt -> Maybe Int
+fromApiBigInt (Api.BigInt i) =
+    String.toInt i

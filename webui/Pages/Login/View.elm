@@ -12,12 +12,14 @@ import Task
 import Utils.Result as Result
 
 
-init : Login.Model
-init =
-    { username = ""
-    , password = ""
-    , error = Nothing
-    }
+init : Context a -> ( Login.Model, Cmd Model.Msg )
+init ctx =
+    ( { username = ""
+      , password = ""
+      , error = Nothing
+      }
+    , Cmd.none
+    )
 
 
 update : Context a -> Login.Msg -> Login.Model -> ( Login.Model, Cmd Model.Msg )
