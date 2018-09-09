@@ -51,7 +51,7 @@ main =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model.view ) of
+    case ( Debug.log "msg" msg, model.view ) of
         ( LoginMsg m, LoginView vm ) ->
             let
                 ( vm_, cmd ) =
