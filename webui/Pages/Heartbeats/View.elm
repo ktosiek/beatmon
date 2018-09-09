@@ -1,7 +1,7 @@
 module Pages.Heartbeats.View exposing (init, update, view)
 
-import Beatmon exposing (Heartbeat, Page)
-import Beatmon.Page as Page
+import Beatmon exposing (Heartbeat)
+import Beatmon.Page as Page exposing (Page)
 import Browser
 import Html exposing (Html)
 import Model

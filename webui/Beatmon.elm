@@ -1,8 +1,6 @@
 module Beatmon exposing
     ( Context
-    , Cursor
     , Heartbeat
-    , Page
     , apiContext
     , getHeartbeats
     , login
@@ -28,14 +26,6 @@ import Maybe.Extra as Maybe
 import RemoteData exposing (RemoteData(..))
 import Task exposing (Task)
 import Utils.Maybe as Maybe
-
-
-type alias Page a =
-    Beatmon.Page.Cursor a
-
-
-type alias Cursor a =
-    Beatmon.Page.Cursor a
 
 
 type alias Context =
