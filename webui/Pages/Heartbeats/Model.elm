@@ -3,6 +3,7 @@ module Pages.Heartbeats.Model exposing (Context, Model, Msg(..))
 import Beatmon
 import Beatmon.Page exposing (Page)
 import RemoteData exposing (RemoteData)
+import Time
 
 
 type Msg
@@ -17,4 +18,5 @@ type alias Model =
 type alias Context a =
     { a
         | apiContext : Beatmon.Context
+        , timeZone : Time.Zone
     }

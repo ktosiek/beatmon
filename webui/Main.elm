@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Beatmon
+import Bootstrap
 import Browser
 import Debug
 import Html exposing (Html)
@@ -25,10 +26,11 @@ type alias Flags =
     }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : Bootstrap.BootstrapFlags -> Flags -> ( Model, Cmd Msg )
+init boot flags =
     { view = LoadingView
     , apiContext = Beatmon.apiContext "http://localhost:5000/graphql"
+    , timeZone = boot.timeZone
     }
         |> Return.singleton
         |> (case flags.apiToken of
@@ -41,9 +43,10 @@ init flags =
 
 
 main =
-    Browser.document
+    Bootstrap.document
         { init = init
         , view = view
+        , loadingView = loading
         , update = update
         , subscriptions = \_ -> Sub.none
         }
@@ -116,10 +119,14 @@ view : Model -> Browser.Document Msg
 view model =
     case model.view of
         LoadingView ->
-            { title = "", body = [ Html.text "Ładowanie..." ] }
+            loading
 
         LoginView viewState ->
             Login.view viewState
 
         HeartbeatsView vm ->
-            Heartbeats.view vm
+            Heartbeats.view model vm
+
+
+loading =
+    { title = "", body = [ Html.text "Loading..." ] }

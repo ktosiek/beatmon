@@ -28,15 +28,15 @@ update { apiContext } msg vm =
             ( { vm | heartbeats = r }, Cmd.none )
 
 
-view : Model -> Browser.Document Model.Msg
-view vm =
+view : Context a -> Model -> Browser.Document Model.Msg
+view ctx vm =
     { title = "Heartbeats"
-    , body = [ heartbeatsPage vm |> Html.map Model.HeartbeatsMsg ]
+    , body = [ heartbeatsPage ctx vm |> Html.map Model.HeartbeatsMsg ]
     }
 
 
-heartbeatsPage : Model -> Html Msg
-heartbeatsPage { heartbeats } =
+heartbeatsPage : Context a -> Model -> Html Msg
+heartbeatsPage ctx { heartbeats } =
     case heartbeats of
         NotAsked ->
             Debug.todo "NotAsked"
@@ -48,24 +48,24 @@ heartbeatsPage { heartbeats } =
             Html.text e
 
         Success h ->
-            heartbeatsTable h
+            heartbeatsTable ctx h
 
 
-heartbeatsTable : Page Heartbeat -> Html Msg
-heartbeatsTable heartbeatPage =
+heartbeatsTable : Context a -> Page Heartbeat -> Html Msg
+heartbeatsTable ctx heartbeatPage =
     Html.div [] <|
-        [ Html.table [] (List.map heartbeatRow heartbeatPage.nodes)
+        [ Html.table [] (List.map (heartbeatRow ctx) heartbeatPage.nodes)
         ]
             ++ List.ifTrue (Page.hasNext heartbeatPage) (Html.text "...and more!")
 
 
-heartbeatRow : Heartbeat -> Html Msg
-heartbeatRow { id, name, notifyAfter, lastSeen } =
+heartbeatRow : Context a -> Heartbeat -> Html Msg
+heartbeatRow { timeZone } { id, name, notifyAfter, lastSeen } =
     Html.tr []
         [ Html.td [] [ id |> Html.text ]
         , Html.td [] [ name |> Maybe.withDefault "" |> Html.text ]
         , Html.td [] [ humaneDuration notifyAfter |> Html.text ]
-        , Html.td [] [ lastSeen |> Maybe.map humaneTimestamp |> Maybe.withDefault "Never" |> Html.text ]
+        , Html.td [] [ lastSeen |> Maybe.map (humaneTimestamp timeZone) |> Maybe.withDefault "Never" |> Html.text ]
         ]
 
 
@@ -78,11 +78,11 @@ humaneDuration allSeconds =
     String.fromInt minutes ++ ":" ++ String.fromInt seconds
 
 
-humaneTimestamp : Time.Posix -> String
-humaneTimestamp t =
+humaneTimestamp : Time.Zone -> Time.Posix -> String
+humaneTimestamp tz t =
     let
         s f =
-            f Time.utc t |> String.fromInt |> String.padLeft 2 '0'
+            f tz t |> String.fromInt |> String.padLeft 2 '0'
     in
     String.join ""
         [ s Time.toYear, "-", s Time.toMonthNumber, "-", s Time.toDay, " ", s Time.toHour, ":", s Time.toMinute, ":", s Time.toSecond ]
