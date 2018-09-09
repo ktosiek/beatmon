@@ -8,6 +8,8 @@ import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onInput, onSubmit)
 import Maybe.Extra as Maybe
 import Model exposing (..)
+import Pages.Heartbeats.Model as Heartbeats
+import Pages.Heartbeats.View as Heartbeats
 import Pages.Login.Model as Login
 import Pages.Login.View as Login
 import Ports
@@ -60,8 +62,17 @@ update msg model =
         ( LoginMsg _, _ ) ->
             ( model, Cmd.none )
 
+        ( HeartbeatsMsg m, HeartbeatsView vm ) ->
+            Heartbeats.update model m vm
+                |> Return.map (\vm_ -> { model | view = HeartbeatsView vm_ })
+
+        ( HeartbeatsMsg _, _ ) ->
+            ( model, Cmd.none )
+
         ( LoggedIn ctx, _ ) ->
-            ( { model | view = SuccessView, apiContext = ctx }, Cmd.none )
+            { model | apiContext = ctx }
+                |> Return.singleton
+                |> initView HeartbeatsView Heartbeats.init
                 |> Return.effect_ saveApiToken
 
         ( ShowLogin, _ ) ->
@@ -110,5 +121,5 @@ view model =
         LoginView viewState ->
             Login.view viewState
 
-        SuccessView ->
-            { title = "Yo", body = [ Html.text (Debug.toString model.apiContext) ] }
+        HeartbeatsView vm ->
+            Heartbeats.view vm

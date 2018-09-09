@@ -1,11 +1,24 @@
-module Beatmon exposing (Context, apiContext, login, loginWithToken)
+module Beatmon exposing
+    ( Context
+    , Cursor
+    , Heartbeat
+    , Page
+    , apiContext
+    , getHeartbeats
+    , login
+    , loginWithToken
+    )
 
 import Beatmon.Api.Mutation as Mutation
 import Beatmon.Api.Object as Api
 import Beatmon.Api.Object.Account as Account
 import Beatmon.Api.Object.AuthenticatePayload
+import Beatmon.Api.Object.Heartbeat as Heartbeat
+import Beatmon.Api.Object.HeartbeatsConnection as HeartbeatsConnection
+import Beatmon.Api.Object.PageInfo as PageInfo
 import Beatmon.Api.Query as Query
 import Beatmon.Api.Scalar as Api
+import Beatmon.Page exposing (Cursor, Page, fromApiCursor, toApiCursor)
 import Graphql.Field as Field
 import Graphql.Http
 import Graphql.Operation exposing (RootMutation, RootQuery)
@@ -17,6 +30,14 @@ import Task exposing (Task)
 import Utils.Maybe as Maybe
 
 
+type alias Page a =
+    Beatmon.Page.Cursor a
+
+
+type alias Cursor a =
+    Beatmon.Page.Cursor a
+
+
 type alias Context =
     { url : String
     , token : Maybe String
@@ -26,6 +47,13 @@ type alias Context =
 type alias Account =
     { id : Int
     , email : String
+    }
+
+
+type alias Heartbeat =
+    { id : String
+    , name : Maybe String
+    , notifyAfter : Int
     }
 
 
@@ -53,6 +81,13 @@ loginWithToken baseCtx rawToken =
         |> Task.mapError (Debug.log "Err")
         |> handleErrors "Not logged in"
         |> Task.map (\_ -> ctx)
+
+
+getHeartbeats : Context -> Maybe (Cursor Heartbeat) -> Task String (Page Heartbeat)
+getHeartbeats ctx cursor =
+    heartbeatsQuery cursor
+        |> sendQuery ctx
+        |> handleErrors "Failed to retrieve heartbeats"
 
 
 apiContext : String -> Context
@@ -125,3 +160,57 @@ currentAccountQuery =
 fromApiBigInt : Api.BigInt -> Maybe Int
 fromApiBigInt (Api.BigInt i) =
     String.toInt i
+
+
+heartbeatsQuery : Maybe (Cursor Heartbeat) -> SelectionSet (Maybe (Page Heartbeat)) RootQuery
+heartbeatsQuery cursor =
+    Query.selection identity
+        |> with
+            (Query.allHeartbeats
+                (\a -> { a | after = cursor |> Maybe.map toApiCursor |> argOrAbsent })
+                (HeartbeatsConnection.selection (\f n -> f n)
+                    |> with (HeartbeatsConnection.pageInfo infoForPage)
+                    |> with (HeartbeatsConnection.nodes heartbeatSelector |> Field.nonNullElementsOrFail)
+                )
+            )
+
+
+heartbeatSelector : SelectionSet Heartbeat Api.Heartbeat
+heartbeatSelector =
+    Heartbeat.selection Heartbeat
+        |> with (Field.map unUUID Heartbeat.heartbeatId)
+        |> with Heartbeat.name
+        |> with Heartbeat.notifyAfterSeconds
+
+
+unUUID : Api.Uuid -> String
+unUUID (Api.Uuid s) =
+    s
+
+
+argOrAbsent : Maybe a -> OptionalArgument a
+argOrAbsent =
+    Maybe.map OptionalArgument.Present
+        >> Maybe.withDefault OptionalArgument.Absent
+
+
+infoForPage : SelectionSet (List a -> Page a) Api.PageInfo
+infoForPage =
+    let
+        buildPage hasNextPage endCursor nodes =
+            { endCursor = maybeIf endCursor hasNextPage |> Maybe.map fromApiCursor
+            , nodes = nodes
+            }
+    in
+    PageInfo.selection buildPage
+        |> with PageInfo.hasNextPage
+        |> with PageInfo.endCursor
+
+
+maybeIf : Maybe a -> Bool -> Maybe a
+maybeIf aMaybe bool =
+    if bool then
+        aMaybe
+
+    else
+        Nothing
