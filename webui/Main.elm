@@ -82,6 +82,12 @@ update msg model =
             Return.singleton model
                 |> initView LoginView Login.init
 
+        ( LogOut, _ ) ->
+            { model | apiContext = Beatmon.resetApiToken model.apiContext }
+                |> Return.singleton
+                |> initView LoginView Login.init
+                |> Return.effect_ saveApiToken
+
         ( NoOp, _ ) ->
             ( model, Cmd.none )
 
@@ -97,12 +103,7 @@ initView viewName viewInit ( model, baseCmd ) =
 
 saveApiToken : Model -> Cmd Msg
 saveApiToken model =
-    case model.apiContext.token of
-        Nothing ->
-            Cmd.none
-
-        Just token ->
-            Ports.saveApiToken token
+    Ports.saveApiToken model.apiContext.token
 
 
 tryToken : String -> Model -> Cmd Msg

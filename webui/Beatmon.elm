@@ -5,6 +5,7 @@ module Beatmon exposing
     , getHeartbeats
     , login
     , loginWithToken
+    , resetApiToken
     )
 
 import Beatmon.Api.Mutation as Mutation
@@ -92,6 +93,11 @@ apiContext url =
 setToken : Context -> Api.JwtToken -> Context
 setToken ctx (Api.JwtToken t) =
     { ctx | token = Just t }
+
+
+resetApiToken : Context -> Context
+resetApiToken ctx =
+    { ctx | token = Nothing }
 
 
 sendMutation :

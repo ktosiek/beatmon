@@ -5,6 +5,7 @@ import Beatmon.Page as Page exposing (Page)
 import Browser
 import Html exposing (Html)
 import Model
+import Pages.Common exposing (basicLayout)
 import Pages.Heartbeats.Model exposing (..)
 import RemoteData exposing (RemoteData(..))
 import Time
@@ -31,24 +32,25 @@ update { apiContext } msg vm =
 view : Context a -> Model -> Browser.Document Model.Msg
 view ctx vm =
     { title = "Heartbeats"
-    , body = [ heartbeatsPage ctx vm |> Html.map Model.HeartbeatsMsg ]
+    , body = [ heartbeatsPage ctx vm ]
     }
 
 
-heartbeatsPage : Context a -> Model -> Html Msg
+heartbeatsPage : Context a -> Model -> Html Model.Msg
 heartbeatsPage ctx { heartbeats } =
-    case heartbeats of
-        NotAsked ->
-            Debug.todo "NotAsked"
+    basicLayout ctx <|
+        case heartbeats of
+            NotAsked ->
+                Debug.todo "NotAsked"
 
-        Loading ->
-            Html.text "Loading..."
+            Loading ->
+                Html.text "Loading..."
 
-        Failure e ->
-            Html.text e
+            Failure e ->
+                Html.text e
 
-        Success h ->
-            heartbeatsTable ctx h
+            Success h ->
+                heartbeatsTable ctx h |> Html.map Model.HeartbeatsMsg
 
 
 heartbeatsTable : Context a -> Page Heartbeat -> Html Msg

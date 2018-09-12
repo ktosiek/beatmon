@@ -1,4 +1,4 @@
 port module Ports exposing (saveApiToken)
 
 
-port saveApiToken : String -> Cmd msg
+port saveApiToken : Maybe String -> Cmd msg

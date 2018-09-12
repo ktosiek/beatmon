@@ -18,6 +18,7 @@ type Msg
     | HeartbeatsMsg Heartbeats.Msg
     | LoggedIn Beatmon.Context
     | ShowLogin
+    | LogOut
     | NoOp
 
 
