@@ -173,8 +173,39 @@ $$;
 
 ALTER FUNCTION public.authenticate(email text, password text) OWNER TO "beatmon/admin";
 
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
 --
--- Name: current_account_id(); Type: FUNCTION; Schema: public; Owner: beatmon
+-- Name: account; Type: TABLE; Schema: public; Owner: beatmon/admin
+--
+
+CREATE TABLE public.account (
+    account_id bigint NOT NULL,
+    email character varying(250) NOT NULL,
+    is_admin boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE public.account OWNER TO "beatmon/admin";
+
+--
+-- Name: current_account(); Type: FUNCTION; Schema: public; Owner: beatmon/admin
+--
+
+CREATE FUNCTION public.current_account() RETURNS public.account
+    LANGUAGE sql STABLE PARALLEL RESTRICTED
+    AS $$
+select * from account where account_id = current_account_id();
+$$;
+
+
+ALTER FUNCTION public.current_account() OWNER TO "beatmon/admin";
+
+--
+-- Name: current_account_id(); Type: FUNCTION; Schema: public; Owner: beatmon/admin
 --
 
 CREATE FUNCTION public.current_account_id() RETURNS bigint
@@ -184,11 +215,7 @@ CREATE FUNCTION public.current_account_id() RETURNS bigint
 $$;
 
 
-ALTER FUNCTION public.current_account_id() OWNER TO beatmon;
-
-SET default_tablespace = '';
-
-SET default_with_oids = false;
+ALTER FUNCTION public.current_account_id() OWNER TO "beatmon/admin";
 
 --
 -- Name: heartbeat; Type: TABLE; Schema: public; Owner: beatmon/admin
@@ -264,20 +291,6 @@ CREATE TABLE internal.account_password (
 ALTER TABLE internal.account_password OWNER TO "beatmon/admin";
 
 --
--- Name: account; Type: TABLE; Schema: public; Owner: beatmon/admin
---
-
-CREATE TABLE public.account (
-    account_id bigint NOT NULL,
-    email character varying(250) NOT NULL,
-    is_admin boolean DEFAULT false NOT NULL,
-    is_active boolean DEFAULT true NOT NULL
-);
-
-
-ALTER TABLE public.account OWNER TO "beatmon/admin";
-
---
 -- Name: account_account_id_seq; Type: SEQUENCE; Schema: public; Owner: beatmon/admin
 --
 
@@ -299,6 +312,43 @@ ALTER SEQUENCE public.account_account_id_seq OWNED BY public.account.account_id;
 
 
 --
+-- Name: devices; Type: TABLE; Schema: public; Owner: beatmon/admin
+--
+
+CREATE TABLE public.devices (
+    device_id bigint NOT NULL,
+    webpush_registration jsonb NOT NULL,
+    account_id bigint DEFAULT public.current_account_id() NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    name character varying(100) DEFAULT 'Unnamed device'::character varying NOT NULL,
+    CONSTRAINT subscription_is_valid CHECK ((webpush_registration ? 'endpoint'::text))
+);
+
+
+ALTER TABLE public.devices OWNER TO "beatmon/admin";
+
+--
+-- Name: devices_device_id_seq; Type: SEQUENCE; Schema: public; Owner: beatmon/admin
+--
+
+CREATE SEQUENCE public.devices_device_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.devices_device_id_seq OWNER TO "beatmon/admin";
+
+--
+-- Name: devices_device_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: beatmon/admin
+--
+
+ALTER SEQUENCE public.devices_device_id_seq OWNED BY public.devices.device_id;
+
+
+--
 -- Name: heartbeat_log; Type: TABLE; Schema: public; Owner: beatmon/admin
 --
 
@@ -316,6 +366,13 @@ ALTER TABLE public.heartbeat_log OWNER TO "beatmon/admin";
 --
 
 ALTER TABLE ONLY public.account ALTER COLUMN account_id SET DEFAULT nextval('public.account_account_id_seq'::regclass);
+
+
+--
+-- Name: devices device_id; Type: DEFAULT; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE ONLY public.devices ALTER COLUMN device_id SET DEFAULT nextval('public.devices_device_id_seq'::regclass);
 
 
 --
@@ -340,6 +397,14 @@ ALTER TABLE ONLY public.account
 
 ALTER TABLE ONLY public.account
     ADD CONSTRAINT account_pkey PRIMARY KEY (account_id);
+
+
+--
+-- Name: devices devices_pkey; Type: CONSTRAINT; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE ONLY public.devices
+    ADD CONSTRAINT devices_pkey PRIMARY KEY (device_id);
 
 
 --
@@ -378,6 +443,14 @@ CREATE INDEX fki_heartbeat_log_fk_heartbeat ON public.heartbeat_log USING btree 
 --
 
 CREATE INDEX fki_heartbeat_log_fk_heartbeat_id ON public.heartbeat_log USING btree (heartbeat_id);
+
+
+--
+-- Name: devices device_account_fk; Type: FK CONSTRAINT; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE ONLY public.devices
+    ADD CONSTRAINT device_account_fk FOREIGN KEY (account_id) REFERENCES public.account(account_id);
 
 
 --
@@ -431,6 +504,19 @@ CREATE POLICY account_self ON public.account TO beatmon USING ((account_id = pub
 
 
 --
+-- Name: devices device_owner; Type: POLICY; Schema: public; Owner: beatmon/admin
+--
+
+CREATE POLICY device_owner ON public.devices TO "beatmon/person" USING ((account_id = public.current_account_id()));
+
+
+--
+-- Name: devices; Type: ROW SECURITY; Schema: public; Owner: beatmon/admin
+--
+
+ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: heartbeat; Type: ROW SECURITY; Schema: public; Owner: beatmon/admin
 --
 
@@ -457,6 +543,22 @@ CREATE POLICY heartbeat_owner ON public.heartbeat_log TO beatmon USING ((account
 
 
 --
+-- Name: TABLE account; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE public.account TO "beatmon/person";
+
+
+--
+-- Name: FUNCTION current_account(); Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+REVOKE ALL ON FUNCTION public.current_account() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.current_account() TO "beatmon/anon";
+GRANT ALL ON FUNCTION public.current_account() TO "beatmon/person";
+
+
+--
 -- Name: TABLE heartbeat; Type: ACL; Schema: public; Owner: beatmon/admin
 --
 
@@ -478,10 +580,31 @@ GRANT INSERT(notify_after_seconds),UPDATE(notify_after_seconds) ON TABLE public.
 
 
 --
--- Name: TABLE account; Type: ACL; Schema: public; Owner: beatmon/admin
+-- Name: TABLE devices; Type: ACL; Schema: public; Owner: beatmon/admin
 --
 
-GRANT SELECT ON TABLE public.account TO "beatmon/person";
+GRANT SELECT,DELETE ON TABLE public.devices TO "beatmon/person";
+
+
+--
+-- Name: COLUMN devices.webpush_registration; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT INSERT(webpush_registration) ON TABLE public.devices TO "beatmon/person";
+
+
+--
+-- Name: COLUMN devices.enabled; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT INSERT(enabled),UPDATE(enabled) ON TABLE public.devices TO "beatmon/person";
+
+
+--
+-- Name: COLUMN devices.name; Type: ACL; Schema: public; Owner: beatmon/admin
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE public.devices TO "beatmon/person";
 
 
 --
