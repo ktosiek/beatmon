@@ -9,6 +9,6 @@
   },
   "scripts": {
     "develop": "yarn postgraphile --append-plugins @graphile-contrib/pg-simplify-inflector -- -c socket:/var/run/postgresql?db=beatmon --watch --jwt-token-identifier beatmon.jwt_token --jwt-secret Secret --schema beatmon --extended-errors hint,detail,errcode --no-ignore-rbac --default-role beatmon/anon --enhance-graphiql",
-    "dump_schema": "pg_dump --schema-only --exclude-schema=postgraphile_watch beatmon > sql/02_schema.sql"
+    "dump_schema": "pg_dump --schema-only --schema=public --schema=internal --schema=beatmon beatmon > sql/03_schema.sql"
   }
 }
