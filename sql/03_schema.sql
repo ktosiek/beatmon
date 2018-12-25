@@ -85,37 +85,6 @@ $$;
 
 ALTER FUNCTION beatmon.authenticate(email text, password text) OWNER TO "beatmon/admin";
 
-SET default_tablespace = '';
-
-SET default_with_oids = false;
-
---
--- Name: account; Type: TABLE; Schema: beatmon; Owner: beatmon/admin
---
-
-CREATE TABLE beatmon.account (
-    account_id bigint NOT NULL,
-    email character varying(250) NOT NULL,
-    is_admin boolean DEFAULT false NOT NULL,
-    is_active boolean DEFAULT true NOT NULL
-);
-
-
-ALTER TABLE beatmon.account OWNER TO "beatmon/admin";
-
---
--- Name: current_account(); Type: FUNCTION; Schema: beatmon; Owner: beatmon/admin
---
-
-CREATE FUNCTION beatmon.current_account() RETURNS beatmon.account
-    LANGUAGE sql STABLE PARALLEL RESTRICTED
-    AS $$
-select * from account where account_id = current_account_id();
-$$;
-
-
-ALTER FUNCTION beatmon.current_account() OWNER TO "beatmon/admin";
-
 --
 -- Name: current_account_id(); Type: FUNCTION; Schema: beatmon; Owner: beatmon/admin
 --
@@ -128,6 +97,10 @@ $$;
 
 
 ALTER FUNCTION beatmon.current_account_id() OWNER TO "beatmon/admin";
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
 
 --
 -- Name: heartbeat; Type: TABLE; Schema: beatmon; Owner: beatmon/admin
@@ -189,6 +162,33 @@ $$;
 
 
 ALTER FUNCTION beatmon.refresh_token() OWNER TO "beatmon/admin";
+
+--
+-- Name: account; Type: TABLE; Schema: beatmon; Owner: beatmon/admin
+--
+
+CREATE TABLE beatmon.account (
+    account_id bigint NOT NULL,
+    email character varying(250) NOT NULL,
+    is_admin boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE beatmon.account OWNER TO "beatmon/admin";
+
+--
+-- Name: viewer(); Type: FUNCTION; Schema: beatmon; Owner: beatmon/admin
+--
+
+CREATE FUNCTION beatmon.viewer() RETURNS beatmon.account
+    LANGUAGE sql STABLE PARALLEL RESTRICTED
+    AS $$
+select * from beatmon.account where account_id = beatmon.current_account_id();
+$$;
+
+
+ALTER FUNCTION beatmon.viewer() OWNER TO "beatmon/admin";
 
 --
 -- Name: set_password(bigint, text); Type: FUNCTION; Schema: internal; Owner: tomek
@@ -460,22 +460,6 @@ GRANT USAGE ON SCHEMA beatmon TO "beatmon/person";
 
 
 --
--- Name: TABLE account; Type: ACL; Schema: beatmon; Owner: beatmon/admin
---
-
-GRANT SELECT ON TABLE beatmon.account TO "beatmon/person";
-
-
---
--- Name: FUNCTION current_account(); Type: ACL; Schema: beatmon; Owner: beatmon/admin
---
-
-REVOKE ALL ON FUNCTION beatmon.current_account() FROM PUBLIC;
-GRANT ALL ON FUNCTION beatmon.current_account() TO "beatmon/anon";
-GRANT ALL ON FUNCTION beatmon.current_account() TO "beatmon/person";
-
-
---
 -- Name: TABLE heartbeat; Type: ACL; Schema: beatmon; Owner: beatmon/admin
 --
 
@@ -494,6 +478,22 @@ GRANT INSERT(name),UPDATE(name) ON TABLE beatmon.heartbeat TO "beatmon/person";
 --
 
 GRANT INSERT(notify_after_seconds),UPDATE(notify_after_seconds) ON TABLE beatmon.heartbeat TO "beatmon/person";
+
+
+--
+-- Name: TABLE account; Type: ACL; Schema: beatmon; Owner: beatmon/admin
+--
+
+GRANT SELECT ON TABLE beatmon.account TO "beatmon/person";
+
+
+--
+-- Name: FUNCTION viewer(); Type: ACL; Schema: beatmon; Owner: beatmon/admin
+--
+
+REVOKE ALL ON FUNCTION beatmon.viewer() FROM PUBLIC;
+GRANT ALL ON FUNCTION beatmon.viewer() TO "beatmon/anon";
+GRANT ALL ON FUNCTION beatmon.viewer() TO "beatmon/person";
 
 
 --
