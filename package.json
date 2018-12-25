@@ -9,7 +9,7 @@
     "pg-migrator": "^1.0.5"
   },
   "scripts": {
-    "develop": "yarn postgraphile --append-plugins @graphile-contrib/pg-simplify-inflector -- -c socket:/var/run/postgresql?db=beatmon --watch --jwt-token-identifier public.jwt_token --jwt-secret Secret  --extended-errors hint,detail,errcode --no-ignore-rbac --default-role beatmon/anon",
-    "dump_schema": "pg_dump --schema-only beatmon > schema.sql"
+    "develop": "yarn postgraphile --append-plugins @graphile-contrib/pg-simplify-inflector -- -c socket:/var/run/postgresql?db=beatmon --watch --jwt-token-identifier beatmon.jwt_token --jwt-secret Secret --schema beatmon --extended-errors hint,detail,errcode --no-ignore-rbac --default-role beatmon/anon",
+    "dump_schema": "pg_dump --schema-only --exclude-schema=postgraphile_watch beatmon > sql/02_schema.sql"
   }
 }
