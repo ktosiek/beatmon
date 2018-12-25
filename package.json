@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "@graphile-contrib/pg-simplify-inflector": "^2.0.1",
-    "postgraphile": "^4.0.0-rc.4"
+    "@graphile-contrib/pg-simplify-inflector": "^3.0.0",
+    "postgraphile": "^4.2.0"
   },
   "devDependencies": {
     "@dillonkearns/elm-graphql": "^1.0.4",
