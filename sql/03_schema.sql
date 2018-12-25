@@ -124,7 +124,7 @@ ALTER TABLE beatmon.heartbeat OWNER TO "beatmon/admin";
 CREATE FUNCTION beatmon.heartbeat_last_seen(h beatmon.heartbeat) RETURNS timestamp without time zone
     LANGUAGE sql STABLE
     AS $$
-  select max(date) from heartbeat_log l where l.heartbeat_id = h.heartbeat_id 
+  select max(date) from beatmon.heartbeat_log l where l.heartbeat_id = h.heartbeat_id 
 $$;
 
 
