@@ -112,13 +112,13 @@ class Agent():
 
     def _get_heartbeats(self):
         response = self.client.execute(ALL_HEARTBEATS)
-        return response['allHeartbeats']['nodes']
+        return response['heartbeats']['nodes']
 
     def _get_heartbeat(self, uuid):
         response = self.client.execute(HEARTBEATS_BY_ID, variable_values={
             'uuid': uuid,
         })
-        nodes = response['allHeartbeats']['nodes']
+        nodes = response['heartbeats']['nodes']
         return nodes[0] if nodes else None
 
     def _update_heartbeat(self, beat):
@@ -181,7 +181,7 @@ mutation refreshToken {
 
 ALL_HEARTBEATS = gql('''
 {
-  allHeartbeats {
+  heartbeats {
     nodes {
       nodeId
       heartbeatId
@@ -194,7 +194,7 @@ ALL_HEARTBEATS = gql('''
 
 HEARTBEATS_BY_ID = gql('''
 query heartbeat($uuid:UUID!) {
-  allHeartbeats(condition:{heartbeatId:$uuid}) {
+  heartbeats(condition:{heartbeatId:$uuid}) {
     nodes {
       nodeId
       heartbeatId
