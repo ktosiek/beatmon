@@ -5,8 +5,7 @@
   },
   "devDependencies": {
     "@dillonkearns/elm-graphql": "^1.0.4",
-    "elm": "^0.19.0-bugfix2",
-    "pg-migrator": "^1.0.5"
+    "elm": "^0.19.0-bugfix2"
   },
   "scripts": {
     "develop": "yarn postgraphile --append-plugins @graphile-contrib/pg-simplify-inflector -- -c socket:/var/run/postgresql?db=beatmon --watch --jwt-token-identifier beatmon.jwt_token --jwt-secret Secret --schema beatmon --extended-errors hint,detail,errcode --no-ignore-rbac --default-role beatmon/anon --enhance-graphiql",
