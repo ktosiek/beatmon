@@ -472,7 +472,7 @@ ALTER TABLE beatmon.account ENABLE ROW LEVEL SECURITY;
 -- Name: account account_self; Type: POLICY; Schema: beatmon; Owner: beatmon/admin
 --
 
-CREATE POLICY account_self ON beatmon.account TO beatmon USING ((account_id = beatmon.current_account_id()));
+CREATE POLICY account_self ON beatmon.account TO "beatmon/person" USING ((account_id = beatmon.current_account_id()));
 
 
 --
@@ -504,14 +504,14 @@ ALTER TABLE beatmon.heartbeat_log ENABLE ROW LEVEL SECURITY;
 -- Name: heartbeat heartbeat_owner; Type: POLICY; Schema: beatmon; Owner: beatmon/admin
 --
 
-CREATE POLICY heartbeat_owner ON beatmon.heartbeat TO beatmon USING ((account_id = beatmon.current_account_id()));
+CREATE POLICY heartbeat_owner ON beatmon.heartbeat TO "beatmon/person" USING ((account_id = beatmon.current_account_id()));
 
 
 --
 -- Name: heartbeat_log heartbeat_owner; Type: POLICY; Schema: beatmon; Owner: beatmon/admin
 --
 
-CREATE POLICY heartbeat_owner ON beatmon.heartbeat_log TO beatmon USING ((account_id = beatmon.current_account_id()));
+CREATE POLICY heartbeat_owner ON beatmon.heartbeat_log TO "beatmon/person" USING ((account_id = beatmon.current_account_id()));
 
 
 --
