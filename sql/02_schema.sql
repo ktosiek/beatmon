@@ -497,6 +497,14 @@ CREATE POLICY heartbeat_owner ON beatmon.heartbeat_log TO beatmon USING ((accoun
 
 
 --
+-- Name: SCHEMA beatmon; Type: ACL; Schema: -; Owner: beatmon/admin
+--
+
+GRANT USAGE ON SCHEMA beatmon TO "beatmon/anon";
+GRANT USAGE ON SCHEMA beatmon TO "beatmon/person";
+
+
+--
 -- Name: TABLE account; Type: ACL; Schema: beatmon; Owner: beatmon/admin
 --
 
