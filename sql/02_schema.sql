@@ -233,6 +233,24 @@ $$;
 ALTER FUNCTION beatmon.refresh_token() OWNER TO "beatmon/admin";
 
 --
+-- Name: set_password(bigint, text); Type: FUNCTION; Schema: internal; Owner: tomek
+--
+
+CREATE FUNCTION internal.set_password(account bigint, password text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    hashed constant text := crypt(password, gen_salt('bf', 10));
+  BEGIN
+    insert into internal.account_password (account_id, password_hash)
+    values (account, hashed)
+    ON CONFLICT (account_id) DO UPDATE SET password_hash = hashed;
+  END $$;
+
+
+ALTER FUNCTION internal.set_password(account bigint, password text) OWNER TO tomek;
+
+--
 -- Name: account_account_id_seq; Type: SEQUENCE; Schema: beatmon; Owner: beatmon/admin
 --
 
