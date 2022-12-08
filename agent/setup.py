@@ -4,7 +4,7 @@ setup(
     scripts=['bin/agent'],
     packages=['agent'],
     install_requires=[
-        "certifi==2018.8.24",
+        "certifi==2022.12.7",
         "chardet==3.0.4",
         "gql==0.1.0",
         "graphql-core==2.1",
